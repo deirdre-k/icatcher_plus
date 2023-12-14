@@ -65,6 +65,9 @@ function playbackStateReducer(playbackState, action) {
         frameRange: action.frameRange
       };
     }
+    case 'resetState': {
+      return initialPlaybackState;
+    }
     default: {
       throw Error('Unknown action: ' + action.type);
     }
@@ -148,4 +151,31 @@ const getMinMaxFrames = (videoData) => {
     videoData.metadata.frameOffset,
     videoData.metadata.numFrames - 1
   ]
+}
+
+export const setForwardPlay = (forwardPlay) => (dispatch) => {
+  dispatch({
+    type: 'setForwardPlay',
+    forwardPlay: true
+  });
+};
+
+export const setSlowMotion = (slowMotion) => (dispatch) => {
+  dispatch({
+    type: 'setSlowMotion',
+    slowMotion: true
+  });
+};
+
+export const setPaused = (pause) => (dispatch) => {
+  dispatch({
+    type: 'setPaused',
+    paused: true
+  });
+};
+
+export const resetPlaybackState = () => dispatch => {
+ dispatch({
+    type: 'resetState',
+  })
 }

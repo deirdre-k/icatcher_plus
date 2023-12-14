@@ -73,3 +73,16 @@ export const addFrames = (frames) => dispatch => {
     }
   })
 }
+
+export const addAnnotations = (annotations) => dispatch => {
+  dispatch({
+    type: 'setAnnotations',
+    annotations: annotations
+  })
+}
+
+export const resetCurrentVideo = () => dispatch => {
+ dispatch({
+    type: 'resetVideo',
+  })
+}
