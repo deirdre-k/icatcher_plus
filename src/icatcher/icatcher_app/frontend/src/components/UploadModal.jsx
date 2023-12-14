@@ -6,18 +6,19 @@ import {
 } from '@mui/material';
 import { useState, useRef } from 'react';
 import { useSnacksDispatch, addSnack } from '../state/SnacksProvider';
-import { useVideoDataDispatch, addFrames } from '../state/VideoDataProvider'
-import UploadButton from './UploadButton'
+import { useVideoDataDispatch, addFrames, resetCurrentVideo } from '../state/VideoDataProvider'
+import UploadButton from './UploadButton';
+import { resetPlaybackState } from "../state/PlaybackStateProvider";
 
 /* Expected props:
-  none
+  open
+  handleClose
 */
-function UploadModal() {
+function UploadModal(props) {
+  const { open, handleClose } = props;
 
   const dispatchSnack = useSnacksDispatch();
   const dispatchVideoData = useVideoDataDispatch();
-  
-  const [ modalOpen, setModalOpen ] = useState(true);
 
   const inputDirectory = useRef(undefined);
   const framesFiles = useRef(undefined);
@@ -27,7 +28,13 @@ function UploadModal() {
     inputDirectory.current = [...e.target.files]
   }
 
+  const resetVideoState = () => {
+    resetCurrentVideo();
+    resetPlaybackState();
+  }
+
   const handleSubmitClick = (e) => {
+    resetVideoState()
     if (inputDirectory.current === undefined || inputDirectory.current.length === 0) {
       dispatchSnack(addSnack('You must select an input directory to continue', 'warning'))
       return;
@@ -37,7 +44,7 @@ function UploadModal() {
     if (findFiles() === false) {
       return;
     }
-    setModalOpen(false);
+    handleClose();
     processInputFiles();
 
   }
@@ -119,7 +126,7 @@ function UploadModal() {
   }
 
   return (
-    <Dialog open={modalOpen} >
+    <Dialog open={open} >
       <DialogTitle>
         Choose Video Directory
         <DialogContentText component={'div'} style={{minWidth: '30vw'}} >
