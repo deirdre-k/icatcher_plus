@@ -149,3 +149,9 @@ const getMinMaxFrames = (videoData) => {
     videoData.metadata.numFrames - 1
   ]
 }
+
+export const resetPlaybackState = () => dispatch => {
+ dispatch({
+    type: 'resetState',
+  })
+}

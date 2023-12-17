@@ -73,3 +73,9 @@ export const addFrames = (frames) => dispatch => {
     }
   })
 }
+
+export const resetCurrentVideo = () => dispatch => {
+ dispatch({
+    type: 'resetVideo',
+  })
+}
