@@ -1,22 +1,10 @@
-import {
-  Button
-} from '@mui/material';
-// import {
-//   ChevronLeftRounded,
-//   ChevronRightRounded
-// } from '@mui/icons-material';
-// import { usePlaybackState } from '../../state/PlaybackStateProvider';
-// import { useVideoData } from '../../state/VideoDataProvider';
-// import styles from './JumpButton.module.css';
+import { Button } from '@mui/material';
 
 function NewVideoButton(props) {
 
   const {
     handleButtonClick
   } = props;
-
-//   const playbackState = usePlaybackState();
-//   const videoData = useVideoData();
 
   return (
       <Button
