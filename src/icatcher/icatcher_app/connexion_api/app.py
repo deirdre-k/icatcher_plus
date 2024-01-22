@@ -3,6 +3,7 @@ from study import Study
 
 import pandas as pd
 import os
+import hashlib
 
 #Global dictionary storing all studies. id -> study.
 STUDIES = {}
@@ -11,8 +12,11 @@ DEFAULT_ID = '' #FOR TESTING
 
 CURRENT_STUDY = None
 
-def get_hash(path): #TO DO: haven't decided how to hash yet.
-    return DEFAULT_ID
+def get_hash(path): 
+    sha256 = hashlib.sha256()
+    sha256.update(path.encode())
+
+    return sha256.hexdigest()
 
 def get_studies():
     return [(id, STUDIES[id]) for id in STUDIES.keys()], 200
@@ -87,4 +91,4 @@ if __name__ == "__main__":
     post_study(new_path)
     post_edit(DEFAULT_ID, (0, 7), "right")
 
-    po
+    print(get_studies())
