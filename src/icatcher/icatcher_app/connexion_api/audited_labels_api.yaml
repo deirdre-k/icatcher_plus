@@ -1,0 +1,99 @@
+openapi: "3.0.0"
+info:
+  title: Audited Labels API
+  version: "1.0" 
+  description: "This API allows for users to directly labels on the interface of the iCatcher+ app."
+servers:
+  - url: http://localhost:5001
+paths:
+  /studies:
+    get:
+      operationId: audits.get_studies
+      responses:
+        "200":
+          description: Success
+          content: #Not sure what to put here
+      
+      summary: Get a list of all registered studies
+      tags: #Not sure what to put here
+
+    post: 
+      operationId: audits.post_study
+      responses: 
+        "200": 
+          description: Success
+          content: 
+
+      summary: Register a new study 
+      tags:
+        
+      parameters:
+        - name: path_to_study
+          in: query
+          required: true
+          schema:
+            type: string
+
+  "/studies/{study_id}":
+    get: 
+      operationId: audits.get_study
+      responses: 
+        "200": 
+          description: Success
+          content:
+        "404":
+          description: Study does not exist
+
+      summary: Get the contents (frames and labels) of a study
+      tags: 
+      
+      parameters: 
+        - name: study_id
+          in: path
+          required: true
+          schema:
+            type: string
+
+  "studies/{study_id}/edit":
+    post:
+      operationId: audits.post_edit
+      responses:
+        "200":
+          description: Success
+          content: 
+        "404":
+          description: Study does not exist
+
+      summary: Register edits to frame labels in a specific range
+      tags: 
+
+      parameters:
+        - name: study_id 
+          in: path
+          required: true
+          schema: 
+            type: #Not sure yet
+        - name: frame_range
+          in: query
+          required: true
+          schema:
+            type: tuple
+            items: 
+              type: integer
+        - name: new_label
+          in: query
+          required: true
+          schema:
+            type: string
+
+        
+
+
+    
+
+
+  
+
+
+
+
