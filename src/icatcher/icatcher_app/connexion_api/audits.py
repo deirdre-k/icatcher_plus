@@ -44,7 +44,7 @@ def post_study(path_to_study):
         frames = [file for file in os.listdir(path_to_study + "/decorated_frames")]
 
         if labels.shape[1] != 3 and labels.shape[0] != len(frames): 
-            return f"labels.txt file in {path_to_study} does not have the correct dimensions"
+            return f"labels.txt file in {path_to_study} does not have the correct dimensions", 400
 
         #Setting up Dataframe to support edits.
         labels.columns = ["Frame", "Label", "Confidence"]
@@ -65,7 +65,7 @@ def post_study(path_to_study):
 def get_study(study_id):
     if study_id in STUDIES:
         if set_current_study(STUDIES[study_id]):
-            return {"labels": CURRENT_STUDY.get_labels(), "frames": CURRENT_STUDY.get_frames()}, 200
+            return {"labels": CURRENT_STUDY.get_labels().to_csv(), "frames": CURRENT_STUDY.get_frames()}, 200
         else:
             return f"Study {study_id} is an invalid directory", 400
     else:
