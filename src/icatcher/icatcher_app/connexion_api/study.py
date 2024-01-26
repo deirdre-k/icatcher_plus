@@ -1,7 +1,5 @@
 import pandas as pd
 
-FRAME_OFFSET = 4
-
 class Study:
     def __init__(self, path, labels, frames):
         self.path = path
@@ -20,7 +18,6 @@ class Study:
     def edit_frames(self, frame_range, new_label):
         self.labels.iloc[frame_range[0] + FRAME_OFFSET: frame_range[1] + FRAME_OFFSET, 3] = new_label 
         self.labels.iloc[frame_range[0] + FRAME_OFFSET: frame_range[1] + FRAME_OFFSET, 4] = new_label
-
 
     
         
