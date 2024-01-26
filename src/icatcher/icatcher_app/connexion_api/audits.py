@@ -7,8 +7,6 @@ import hashlib
 
 #Global dictionary storing all studies. id -> study.
 STUDIES = {}
-DEFAULT_ID = '' #FOR TESTING
-
 CURRENT_STUDY = None
 
 #UTILITY FUNCTIONS
@@ -25,7 +23,7 @@ def set_current_study(path):
     else:
         return False
     
-    if "decoarated_frames" in directory_items:
+    if "decorated_frames" in directory_items:
         frames = [file for file in os.listdir(path + "/decorated_frames")]
     else:
         return False
@@ -75,7 +73,7 @@ def get_study(study_id):
 
 def post_edit(study_id, frame_range, new_label):
     if study_id in STUDIES:
-        if STUDIES[study_id] != CURRENT_STUDY.get_path(): #Cache the study if not currently cached.
+        if STUDIES[study_id] == CURRENT_STUDY.get_path(): #Check that the id of the request matches the cached study.
             if frame_range[0] >= 0 and frame_range[1] < len(CURRENT_STUDY.get_frames()): #Check that the range is valid.
                 CURRENT_STUDY.edit_frames(frame_range, new_label)
                 CURRENT_STUDY.get_labels().to_csv(CURRENT_STUDY.get_path() + '/audited_labels.csv', index=False) 
@@ -91,20 +89,23 @@ def post_edit(study_id, frame_range, new_label):
 #Testing code.
 if __name__ == "__main__":
     path = "./../../../../../../Video/frames_with_patch_new/study-57bc591dc0d9d70055f775db_child-111e4f19_video-c6f3fd28_privacy-public_video"
-    post_study(path)
-
-    print(CURRENT_STUDY.get_labels().head())
-    print(CURRENT_STUDY.get_labels().tail())
-
-    print(os.listdir(path))
-
-    post_edit(DEFAULT_ID, (0, 2), "left")
-    print(CURRENT_STUDY.get_labels().head())
-    print(CURRENT_STUDY.get_labels().tail())
+    if post_study(path)[1] != 200:
+        print("Study with path should have been posted")    
+    if post_edit(get_hash(path), (0, 2), "left")[1] != 200:
+        print("Edit for study with path should have been posted")
 
     new_path = "./../../../../../../Video/frames_with_patch/study-57bc591dc0d9d70055f775db_child-111e4f19_video-c6f3fd28_privacy-public_video"
+    if post_study(new_path)[1] != 200:
+        print("Study with new_path should have been posted")
+    if post_edit(get_hash(new_path), (0, 7), "right")[1] != 200:
+        print("Edit for study with new_path should have been posted")
 
-    post_study(new_path)
-    post_edit(DEFAULT_ID, (0, 7), "right")
+    if get_study(get_hash(path))[1] != 200:
+        print("Should be able to get a study that is already registered")
 
-    print(get_studies())
+    #Some error catching tests.
+    if post_edit(get_hash(new_path), (10, 20), "away")[1] != 400:
+        print("Edit for study should not be posted without getting the study first")
+
+    if post_edit(get_hash(path), (-5, 10), "away")[1] != 400: 
+        print("Edit for study should not be posted for an invalid range")
