@@ -16,8 +16,8 @@ class Study:
         return self.frames
 
     def edit_frames(self, frame_range, new_label):
-        self.labels.iloc[frame_range[0] + FRAME_OFFSET: frame_range[1] + FRAME_OFFSET, 3] = new_label 
-        self.labels.iloc[frame_range[0] + FRAME_OFFSET: frame_range[1] + FRAME_OFFSET, 4] = new_label
+        self.labels.iloc[frame_range[0]: frame_range[1], 3] = new_label 
+        self.labels.iloc[frame_range[0]: frame_range[1], 4] = new_label
 
     
         
