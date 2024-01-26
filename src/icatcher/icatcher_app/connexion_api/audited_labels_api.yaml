@@ -12,10 +12,19 @@ paths:
       responses:
         "200":
           description: Success
-          content: #Not sure what to put here
+          content: 
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: 
+                      type: string
+                    path_to_study: 
+                      type: string
       
       summary: Get a list of all registered studies
-      tags: #Not sure what to put here
 
     post: 
       operationId: audits.post_study
@@ -23,9 +32,17 @@ paths:
         "200": 
           description: Success
           content: 
+            text/plain:
+              schema: 
+                type: string
+        "400":
+          description: Invalid input directory
+          content:
+            text/plain:
+              schema:
+                type: string
 
       summary: Register a new study 
-      tags:
         
       parameters:
         - name: path_to_study
@@ -40,12 +57,31 @@ paths:
       responses: 
         "200": 
           description: Success
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  labels:
+                    type: string
+                  frames:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          description: Invalid input directory
           content:
+            text/plain:
+              schema:
+                type: string
         "404":
           description: Study does not exist
+          content:
+            text/plain:
+              schema:
+                type: string
 
       summary: Get the contents (frames and labels) of a study
-      tags: 
       
       parameters: 
         - name: study_id
@@ -54,30 +90,34 @@ paths:
           schema:
             type: string
 
-  "studies/{study_id}/edit":
+  "/studies/{study_id}/edit":
     post:
       operationId: audits.post_edit
       responses:
         "200":
           description: Success
           content: 
+            text/plain:
+              schema:
+                type: string
+        "400":
+          description: Invalid edit request 
         "404":
           description: Study does not exist
 
       summary: Register edits to frame labels in a specific range
-      tags: 
 
       parameters:
         - name: study_id 
           in: path
           required: true
           schema: 
-            type: #Not sure yet
+            type: string
         - name: frame_range
           in: query
           required: true
           schema:
-            type: tuple
+            type: array
             items: 
               type: integer
         - name: new_label
