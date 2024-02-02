@@ -4,32 +4,43 @@ from study import Study
 import pandas as pd
 import os
 import hashlib
+import base64
 
 #Global dictionary storing all studies. id -> study.
 STUDIES = {}
 CURRENT_STUDY = None
 
 #UTILITY FUNCTIONS
-def get_hash(path): 
+def get_hash(path_to_study): 
     sha256 = hashlib.sha256()
-    sha256.update(path.encode())
+    sha256.update(path_to_study.encode())
 
     return sha256.hexdigest()
 
-def set_current_study(path):
-    directory_items = set(os.listdir(path))
+def set_current_study(path_to_study):
+    if CURRENT_STUDY.get_path() == path_to_study: #Already the current study
+        return True
+
+    directory_items = set(os.listdir(path_to_study))
     if "audited_labels.csv" in directory_items: #Check if the file exists
-        labels = pd.read_csv(path + "/audited_labels.csv", header=None)
+        labels = pd.read_csv(path_to_study + "/audited_labels.csv")
     else:
         return False
     
     if "decorated_frames" in directory_items:
-        frames = [file for file in os.listdir(path + "/decorated_frames")]
+        frames = []
+        frame_files = os.listdir(path_to_study + "/decorated_frames")
+        frame_files.sort()
+        for file in frame_files:
+            image = open(path_to_study + "/decorated_frames/" + file, "rb")
+            data = image.read()
+            frames.append(base64.b64encode(data).decode('utf-8'))
+            image.close()
     else:
         return False
 
     global CURRENT_STUDY
-    CURRENT_STUDY = Study(path, labels, frames)
+    CURRENT_STUDY = Study(path_to_study, labels, frames)
     return True
 
 #API ENDPOINTS
@@ -37,11 +48,22 @@ def get_studies():
     return [{"id": id, "path_to_study": STUDIES[id]} for id in STUDIES.keys()], 200
 
 def post_study(path_to_study):
-    directory_items = set(os.listdir(path_to_study))
+    try:
+        directory_items = set(os.listdir(path_to_study))
+    except FileNotFoundError:
+        return f"Study with path {path_to_study} is not an existing directory", 400
 
     if "labels.txt" in directory_items and "decorated_frames" in directory_items: 
         labels = pd.read_csv(path_to_study + "/labels.txt", header=None) 
-        frames = [file for file in os.listdir(path_to_study + "/decorated_frames")]
+
+        frames = []
+        frame_files = os.listdir(path_to_study + "/decorated_frames")
+        frame_files.sort()
+        for file in frame_files: 
+            image = open(path_to_study + "/decorated_frames/" + file, "rb")
+            data = image.read()
+            frames.append(base64.b64encode(data).decode('utf-8'))
+            image.close()
 
         if labels.shape[1] != 3 and labels.shape[0] != len(frames): 
             return f"labels.txt file in {path_to_study} does not have the correct dimensions", 400
@@ -65,24 +87,100 @@ def post_study(path_to_study):
 def get_study(study_id):
     if study_id in STUDIES:
         if set_current_study(STUDIES[study_id]):
-            return {"labels": CURRENT_STUDY.get_labels().to_csv(), "frames": CURRENT_STUDY.get_frames()}, 200
+            current_labels = CURRENT_STUDY.get_labels()
+
+            #Convert to object.
+            labels_return = []
+            for i in range(len(current_labels)):
+                labels_return.append({"label": current_labels.iloc[i, current_labels.columns.get_loc('Label')], 
+                                    "confidence": current_labels.iloc[i, current_labels.columns.get_loc('Confidence')], 
+                                    "edited": current_labels.iloc[i, current_labels.columns.get_loc('Edited')], 
+                                    "merged": current_labels.iloc[i, current_labels.columns.get_loc('Merged')]})
+
+            return {"labels": labels_return, "frames": CURRENT_STUDY.get_frames()}, 200
         else:
             return f"Study {study_id} is an invalid directory", 400
     else:
         return f"Study {study_id} does not exist", 404
 
-def post_edit(study_id, frame_range, new_label):
+def get_frames(study_id, start = None, end = None):
+    if study_id in STUDIES:
+        if set_current_study(STUDIES[study_id]):
+            if start and end: #Range.
+                if start >= 0 and end <= len(current_labels):
+                    return CURRENT_STUDY.get_labels()[start:end], 200
+                else:
+                    return f"Range from {start} to {end} is invalid", 400
+            
+            elif start: #One frame.
+                if start >= 0 and start < len(current_labels):
+                    return CURRENT_STUDY.get_labels()[start:start+1], 200
+                else:
+                    return f"Frame at {start} is invalid", 400
+
+            else: #All frames.
+                return CURRENT_STUDY.get_labels(), 200
+        
+        else:
+            return f"Study {study_id} is an invalid directory", 400
+    else:
+        return f"Study {study_id} does not exist", 404
+
+def get_labels(study_id, start = None, end = None):
+    if study_id in STUDIES:
+        if set_current_study(STUDIES[study_id]):
+            current_labels = CURRENT_STUDY.get_labels()
+
+            if start and end: #Range.
+                if start >= 0 and end <= len(current_labels):
+                    return [{"label": current_labels.iloc[i, current_labels.columns.get_loc('Label')], 
+                                    "confidence": current_labels.iloc[i, current_labels.columns.get_loc('Confidence')], 
+                                    "edited": current_labels.iloc[i, current_labels.columns.get_loc('Edited')], 
+                                    "merged": current_labels.iloc[i, current_labels.columns.get_loc('Merged')]} for i in range(start, end)], 200
+                else:
+                    return f"Range from {start} to {end} is invalid", 400
+
+            elif start: #One frame.
+                if start >= 0 and start < len(current_labels):
+                    return [{"label": current_labels.iloc[start, current_labels.columns.get_loc('Label')], 
+                                    "confidence": current_labels.iloc[start, current_labels.columns.get_loc('Confidence')], 
+                                    "edited": current_labels.iloc[start, current_labels.columns.get_loc('Edited')], 
+                                    "merged": current_labels.iloc[start, current_labels.columns.get_loc('Merged')]}], 200
+                else:
+                    return f"Label at {start} is invalid", 400
+
+            else: #All frames.
+                return [{"label": current_labels.iloc[i, current_labels.columns.get_loc('Label')], 
+                                "confidence": current_labels.iloc[i, current_labels.columns.get_loc('Confidence')], 
+                                "edited": current_labels.iloc[i, current_labels.columns.get_loc('Edited')], 
+                                "merged": current_labels.iloc[i, current_labels.columns.get_loc('Merged')]} for i in range(len(current_labels))], 200
+        else:
+            return f"Study {study_id} is an invalid directory", 400
+    else:
+        return f"Study {study_id} does not exist", 400
+
+def post_edit(study_id, new_label, start_frame, end_frame = None):
     if study_id in STUDIES:
         if STUDIES[study_id] == CURRENT_STUDY.get_path(): #Check that the id of the request matches the cached study.
-            if frame_range[0] >= 0 and frame_range[1] < len(CURRENT_STUDY.get_frames()): #Check that the range is valid.
-                CURRENT_STUDY.edit_frames(frame_range, new_label)
-                CURRENT_STUDY.get_labels().to_csv(CURRENT_STUDY.get_path() + '/audited_labels.csv', index=False) 
+            if end_frame:
+                if start_frame >= 0 and end_frame <= len(CURRENT_STUDY.get_frames()): #Check that the range is valid.
+                    CURRENT_STUDY.edit_frames(new_label, start_frame, end_frame)
+                    CURRENT_STUDY.get_labels().to_csv(CURRENT_STUDY.get_path() + '/audited_labels.csv', index=False)             
+                else:
+                    return f"Frame range from {start_frame} to {end_frame} cannot be edited", 400
+                
+                return f"Study {study_id} has posted the audits from {start_frame} to {end_frame} with new label {new_label}", 200
             else:
-                return f"Frame range from {frame_range[0]} to {frame_range[1]} cannot be edited", 400
+                if start_frame >= 0 and start_frame < len(CURRENT_STUDY.get_frames()):
+                    CURRENT_STUDY.edit_frames(new_label, start_frame)
+                    CURRENT_STUDY.get_labels().to_csv(CURRENT_STUDY.get_path() + '/audited_labels.csv', index=False)             
+                else:
+                    return f"Frame at {start_frame} cannot be edited", 400
+                
+                return f"Study {study_id} has posted the audit at {start_frame} with new label {new_label}", 200
+
         else: 
             return f"Study {study_id} does not match the current cached study", 400
-
-        return f"Study {study_id} has posted the audits from {frame_range[0]} to {frame_range[1]} with new label {new_label}", 200
     else:
         return f"Study {study_id} does not exist", 404
 
