@@ -15,9 +15,14 @@ class Study:
     def get_frames(self):
         return self.frames
 
-    def edit_frames(self, frame_range, new_label):
-        self.labels.iloc[frame_range[0]: frame_range[1], 3] = new_label 
-        self.labels.iloc[frame_range[0]: frame_range[1], 4] = new_label
+    def edit_frames(self, new_label, start_frame, end_frame = None):
+        if end_frame:
+            self.labels.iloc[start_frame: end_frame, 3] = new_label 
+            self.labels.iloc[start_frame: end_frame, 4] = new_label
+        else:
+            self.labels.iloc[start_frame, 3] = new_label
+            self.labels.iloc[start_frame, 4] = new_label
+
 
     
         

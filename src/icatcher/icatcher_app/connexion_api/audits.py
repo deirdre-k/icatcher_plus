@@ -18,6 +18,7 @@ def get_hash(path_to_study):
     return sha256.hexdigest()
 
 def set_current_study(path_to_study):
+    global CURRENT_STUDY
     if CURRENT_STUDY.get_path() == path_to_study: #Already the current study
         return True
 
@@ -39,7 +40,6 @@ def set_current_study(path_to_study):
     else:
         return False
 
-    global CURRENT_STUDY
     CURRENT_STUDY = Study(path_to_study, labels, frames)
     return True
 
@@ -106,20 +106,21 @@ def get_study(study_id):
 def get_frames(study_id, start = None, end = None):
     if study_id in STUDIES:
         if set_current_study(STUDIES[study_id]):
+            frames = CURRENT_STUDY.get_frames()
             if start and end: #Range.
-                if start >= 0 and end <= len(current_labels):
-                    return CURRENT_STUDY.get_labels()[start:end], 200
+                if start >= 0 and end <= len(frames):
+                    return frames[start:end], 200
                 else:
                     return f"Range from {start} to {end} is invalid", 400
             
-            elif start: #One frame.
-                if start >= 0 and start < len(current_labels):
-                    return CURRENT_STUDY.get_labels()[start:start+1], 200
+            elif start != None: #One frame.
+                if start >= 0 and start < len(frames):
+                    return frames[start:start+1], 200
                 else:
                     return f"Frame at {start} is invalid", 400
 
             else: #All frames.
-                return CURRENT_STUDY.get_labels(), 200
+                return frames, 200
         
         else:
             return f"Study {study_id} is an invalid directory", 400
@@ -140,7 +141,7 @@ def get_labels(study_id, start = None, end = None):
                 else:
                     return f"Range from {start} to {end} is invalid", 400
 
-            elif start: #One frame.
+            elif start != None: #One frame.
                 if start >= 0 and start < len(current_labels):
                     return [{"label": current_labels.iloc[start, current_labels.columns.get_loc('Label')], 
                                     "confidence": current_labels.iloc[start, current_labels.columns.get_loc('Confidence')], 
@@ -155,9 +156,9 @@ def get_labels(study_id, start = None, end = None):
                                 "edited": current_labels.iloc[i, current_labels.columns.get_loc('Edited')], 
                                 "merged": current_labels.iloc[i, current_labels.columns.get_loc('Merged')]} for i in range(len(current_labels))], 200
         else:
-            return f"Study {study_id} is an invalid directory", 400
+            return f"Study {study_id} is an invalid directory and has not been registered", 400
     else:
-        return f"Study {study_id} does not exist", 400
+        return f"Study {study_id} does not exist", 404
 
 def post_edit(study_id, new_label, start_frame, end_frame = None):
     if study_id in STUDIES:
@@ -189,21 +190,23 @@ if __name__ == "__main__":
     path = "./../../../../../../Video/frames_with_patch_new/study-57bc591dc0d9d70055f775db_child-111e4f19_video-c6f3fd28_privacy-public_video"
     if post_study(path)[1] != 200:
         print("Study with path should have been posted")    
-    if post_edit(get_hash(path), (0, 2), "left")[1] != 200:
+    if post_edit(get_hash(path), "left", 0, 2)[1] != 200:
         print("Edit for study with path should have been posted")
 
     new_path = "./../../../../../../Video/frames_with_patch/study-57bc591dc0d9d70055f775db_child-111e4f19_video-c6f3fd28_privacy-public_video"
     if post_study(new_path)[1] != 200:
         print("Study with new_path should have been posted")
-    if post_edit(get_hash(new_path), (0, 7), "right")[1] != 200:
+    if post_edit(get_hash(new_path), "right", 0, 7)[1] != 200:
         print("Edit for study with new_path should have been posted")
 
     if get_study(get_hash(path))[1] != 200:
         print("Should be able to get a study that is already registered")
 
     #Some error catching tests.
-    if post_edit(get_hash(new_path), (10, 20), "away")[1] != 400:
+    if post_edit(get_hash(new_path), "away", 10, 20)[1] != 400:
         print("Edit for study should not be posted without getting the study first")
 
-    if post_edit(get_hash(path), (-5, 10), "away")[1] != 400: 
+    if post_edit(get_hash(path), "away", -5, 10)[1] != 400: 
         print("Edit for study should not be posted for an invalid range")
+
+    get_labels(get_hash(new_path), 0)

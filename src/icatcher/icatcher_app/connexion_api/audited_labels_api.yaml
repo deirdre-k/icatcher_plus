@@ -80,12 +80,12 @@ paths:
           in: query
           required: false
           schema: 
-            type: number
+            type: integer
         - name: end
           in: query
           required: false
           schema:
-            type: number
+            type: integer
 
   "/studies/{study_id}/labels":
     get: 
@@ -125,12 +125,12 @@ paths:
           in: query
           required: false
           schema: 
-            type: number
+            type: integer
         - name: end
           in: query
           required: false
           schema:
-            type: number
+            type: integer
 
   "/studies/{study_id}/edit":
     post:
@@ -169,12 +169,12 @@ paths:
           in: query
           required: true
           schema: 
-            type: number
+            type: integer
         - name: end_frame
           in: query
           required: false
           schema:
-            type: number
+            type: integer
 
 
         
