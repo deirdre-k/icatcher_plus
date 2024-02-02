@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: Audited Labels API
   version: "1.0" 
-  description: "This API allows for users to directly labels on the interface of the iCatcher+ app."
+  description: "This API allows for users to directly edit labels on the interface of the iCatcher+ app."
 servers:
   - url: http://localhost:5001
 paths:
@@ -51,37 +51,24 @@ paths:
           schema:
             type: string
 
-  "/studies/{study_id}":
+  "/studies/{study_id}/frames":
     get: 
-      operationId: audits.get_study
+      operationId: audits.get_frames
       responses: 
         "200": 
           description: Success
           content: 
             application/json:
               schema:
-                type: object
-                properties:
-                  labels:
-                    type: string
-                  frames:
-                    type: array
-                    items:
-                      type: string
+                type: array
+                items:
+                  type: string
         "400":
-          description: Invalid input directory
-          content:
-            text/plain:
-              schema:
-                type: string
+          description: Invalid input directory or invalid range
         "404":
           description: Study does not exist
-          content:
-            text/plain:
-              schema:
-                type: string
 
-      summary: Get the contents (frames and labels) of a study
+      summary: Get the frames of a study. If start and end are provided, get frames in the range [start, end). If only the start is provided, get the frame with index start. If neither are provided, return all frames.
       
       parameters: 
         - name: study_id
@@ -89,6 +76,61 @@ paths:
           required: true
           schema:
             type: string
+        - name: start
+          in: query
+          required: false
+          schema: 
+            type: number
+        - name: end
+          in: query
+          required: false
+          schema:
+            type: number
+
+  "/studies/{study_id}/labels":
+    get: 
+      operationId: audits.get_labels
+      responses: 
+        "200": 
+          description: Success
+          content: 
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    label: 
+                      type: string
+                    confidence: 
+                      type: number
+                    edited: 
+                      type: string
+                    merged:
+                      type: string
+        "400":
+          description: Invalid input directory or invalid range
+        "404":
+          description: Study does not exist
+
+      summary: Get the labels of a study. If start and end are provided, get labels in the range [start, end). If only the start is provided, get the label with index start. If neither are provided, return all labels.
+      
+      parameters: 
+        - name: study_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: query
+          required: false
+          schema: 
+            type: number
+        - name: end
+          in: query
+          required: false
+          schema:
+            type: number
 
   "/studies/{study_id}/edit":
     post:
@@ -101,11 +143,11 @@ paths:
               schema:
                 type: string
         "400":
-          description: Invalid edit request 
+          description: Invalid edit request
         "404":
           description: Study does not exist
 
-      summary: Register edits to frame labels in a specific range
+      summary: Register edits to frame labels. If end is provided, edit frames in the range [start, end). If end is not provided, edited only the frame at index start.
 
       parameters:
         - name: study_id 
@@ -113,18 +155,27 @@ paths:
           required: true
           schema: 
             type: string
-        - name: frame_range
-          in: query
-          required: true
-          schema:
-            type: array
-            items: 
-              type: integer
         - name: new_label
           in: query
           required: true
           schema:
             type: string
+            enum: 
+              - left
+              - right
+              - away
+              - noface
+        - name: start_frame
+          in: query
+          required: true
+          schema: 
+            type: number
+        - name: end_frame
+          in: query
+          required: false
+          schema:
+            type: number
+
 
         
 
